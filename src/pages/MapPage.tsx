@@ -1,17 +1,22 @@
-import { LoadScript, GoogleMap } from "@react-google-maps/api";
+import { LoadScript, GoogleMap, Marker } from "@react-google-maps/api";
 import "./MapPage.css";
 
-const center = { lat: -27.601235, lng: -48.503915 };
+// -27.596433, -48.558353
+const center = { lat: -27.596433, lng: -48.558353 };
 
 export default function MapPage() {
   return (
-    <LoadScript googleMapsApiKey="AIzaSyDe3w7PYQfOlzEvh-lyr5HdHiC9ICTW4qY">
+    <LoadScript
+      googleMapsApiKey={process.env.REACT_APP_GOOGLE_MAPS_API_KEY || ""}
+    >
       <div className="map">
         <GoogleMap
           center={center}
-          zoom={15}
+          zoom={16}
           mapContainerStyle={{ width: "100%", height: "100%" }}
-        />
+        >
+          <Marker position={center} title="Centro" />
+        </GoogleMap>
       </div>
     </LoadScript>
   );
