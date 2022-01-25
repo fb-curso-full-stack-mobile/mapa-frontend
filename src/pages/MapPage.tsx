@@ -8,6 +8,8 @@ import {
 import { useState } from "react";
 import "./MapPage.css";
 
+import pin from "../images/pin.png";
+
 // -27.596433, -48.558353
 const center = { lat: -27.596433, lng: -48.558353 };
 
@@ -58,6 +60,7 @@ export default function MapPage() {
                   key={index}
                   position={place.geometry.location}
                   onClick={() => setSelectedPlace(place)}
+                  icon={pin}
                 >
                   {selectedPlace && selectedPlace === place ? (
                     <InfoWindow
