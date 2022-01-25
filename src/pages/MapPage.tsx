@@ -3,6 +3,7 @@ import {
   GoogleMap,
   Marker,
   StandaloneSearchBox,
+  InfoWindow,
 } from "@react-google-maps/api";
 import { useState } from "react";
 import "./MapPage.css";
@@ -13,18 +14,19 @@ const center = { lat: -27.596433, lng: -48.558353 };
 export default function MapPage() {
   const [map, setMap] = useState<google.maps.Map>();
   const [searchBox, setSearchBox] = useState<google.maps.places.SearchBox>();
-  const [locations, setLocations] = useState<google.maps.LatLngLiteral[]>([]);
+  const [places, setPlaces] = useState<google.maps.places.PlaceResult[]>([]);
+  const [selectedPlace, setSelectedPlace] =
+    useState<google.maps.places.PlaceResult | null>();
 
   const handleOnPlacesChanged = () => {
-    const places = searchBox!.getPlaces();
-    const place = places![0];
-    const location = {
-      lat: place.geometry?.location?.lat() || 0,
-      lng: place.geometry?.location?.lng() || 0,
-    };
-    const newLocations = [...locations, location];
-    setLocations(newLocations);
-    map?.panTo(location);
+    const searchBoxPlaces = searchBox!.getPlaces();
+    const place = searchBoxPlaces![0];
+    const newPlaces = [...places, place];
+    setSelectedPlace(null);
+    setPlaces(newPlaces);
+    if (place.geometry && place.geometry.location) {
+      map?.panTo(place.geometry.location);
+    }
   };
 
   return (
@@ -49,8 +51,28 @@ export default function MapPage() {
               </StandaloneSearchBox>
             </div>
           </div>
-          {locations.map((location, index) => (
-            <Marker key={index} position={location} />
+          {places.map((place, index) => (
+            <>
+              {place.geometry && place.geometry.location ? (
+                <Marker
+                  key={index}
+                  position={place.geometry.location}
+                  onClick={() => setSelectedPlace(place)}
+                >
+                  {selectedPlace && selectedPlace === place ? (
+                    <InfoWindow
+                      key={`info-window-${index}`}
+                      onCloseClick={() => setSelectedPlace(null)}
+                    >
+                      <div>
+                        <h1>Info Window</h1>
+                        <p>{selectedPlace.formatted_address}</p>
+                      </div>
+                    </InfoWindow>
+                  ) : null}
+                </Marker>
+              ) : null}
+            </>
           ))}
         </GoogleMap>
       </div>
