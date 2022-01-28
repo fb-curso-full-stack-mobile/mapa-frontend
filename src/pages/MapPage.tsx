@@ -2,16 +2,22 @@ import {
   LoadScript,
   GoogleMap,
   Marker,
-  StandaloneSearchBox,
   InfoWindow,
 } from "@react-google-maps/api";
 import { useState } from "react";
 import "./MapPage.css";
 
 import pin from "../images/pin.png";
+import SearchBox from "../components/SearchBox";
+import POIBox from "../components/POIBox";
 
 // -27.596433, -48.558353
 const center = { lat: -27.596433, lng: -48.558353 };
+
+const TABS = {
+  search: 0,
+  poi: 1,
+};
 
 export default function MapPage() {
   const [map, setMap] = useState<google.maps.Map>();
@@ -19,6 +25,8 @@ export default function MapPage() {
   const [places, setPlaces] = useState<google.maps.places.PlaceResult[]>([]);
   const [selectedPlace, setSelectedPlace] =
     useState<google.maps.places.PlaceResult | null>();
+
+  const [activeTab, setActiveTab] = useState(TABS.search);
 
   const handleOnPlacesChanged = () => {
     const searchBoxPlaces = searchBox!.getPlaces();
@@ -45,12 +53,28 @@ export default function MapPage() {
         >
           <div className="search-box-container">
             <div className="search-box-layer">
-              <StandaloneSearchBox
-                onLoad={setSearchBox}
-                onPlacesChanged={handleOnPlacesChanged}
-              >
-                <input type="text" className="search-box-input" />
-              </StandaloneSearchBox>
+              <nav>
+                <button
+                  className={activeTab === TABS.search ? "active" : ""}
+                  onClick={() => setActiveTab(TABS.search)}
+                >
+                  Busca
+                </button>
+                <button
+                  className={activeTab === TABS.poi ? "active" : ""}
+                  onClick={() => setActiveTab(TABS.poi)}
+                >
+                  POI
+                </button>
+              </nav>
+              {activeTab === TABS.search ? (
+                <SearchBox
+                  onLoad={setSearchBox}
+                  onPlacesChanged={handleOnPlacesChanged}
+                />
+              ) : activeTab === TABS.poi ? (
+                <POIBox />
+              ) : null}
             </div>
           </div>
           {places.map((place, index) => (
