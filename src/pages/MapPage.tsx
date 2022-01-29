@@ -4,12 +4,14 @@ import {
   Marker,
   InfoWindow,
 } from "@react-google-maps/api";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import "./MapPage.css";
 
 import pin from "../images/pin.png";
+import pinPoi from "../images/pin_poi.png";
 import SearchBox from "../components/SearchBox";
 import POIBox from "../components/POIBox";
+import { Poi } from "../models/poi";
 
 // -27.596433, -48.558353
 const center = { lat: -27.596433, lng: -48.558353 };
@@ -28,16 +30,44 @@ export default function MapPage() {
 
   const [activeTab, setActiveTab] = useState(TABS.search);
 
+  const [pois, setPois] = useState<Poi[]>([]);
+  const [poiSelected, setPoiSelected] = useState<Poi | null>();
+
   const handleOnPlacesChanged = () => {
     const searchBoxPlaces = searchBox!.getPlaces();
     const place = searchBoxPlaces![0];
     const newPlaces = [...places, place];
     setSelectedPlace(null);
     setPlaces(newPlaces);
+    mapPanTo(place);
+  };
+
+  const mapPanTo = (place: google.maps.places.PlaceResult) => {
     if (place.geometry && place.geometry.location) {
       map?.panTo(place.geometry.location);
     }
   };
+
+  const updatePois = () => {
+    fetch("http://localhost:3001/v1/poi", {
+      headers: {
+        "Content-Type": "application/json",
+      },
+      method: "GET",
+    }).then(async (response) => {
+      const json = await response.json();
+      if (response.ok) {
+        console.log(json.pois);
+        setPois(json.pois);
+      } else {
+        console.log("Erro ", json.message);
+      }
+    });
+  };
+
+  useEffect(() => {
+    updatePois();
+  }, []);
 
   return (
     <LoadScript
@@ -73,7 +103,10 @@ export default function MapPage() {
                   onPlacesChanged={handleOnPlacesChanged}
                 />
               ) : activeTab === TABS.poi ? (
-                <POIBox />
+                <POIBox
+                  onPlaceSelected={(place) => mapPanTo(place)}
+                  onPoiSaved={updatePois}
+                />
               ) : null}
             </div>
           </div>
@@ -100,6 +133,37 @@ export default function MapPage() {
                 </Marker>
               ) : null}
             </>
+          ))}
+          {pois.map((poi, index) => (
+            <Marker
+              key={`marker-poi-${index}`}
+              position={{ lat: poi.lat, lng: poi.lng }}
+              onClick={() => setPoiSelected(poi)}
+              icon={pinPoi}
+            >
+              {poiSelected && poiSelected === poi ? (
+                <InfoWindow
+                  key={`info-window-poi-${index}`}
+                  onCloseClick={() => setSelectedPlace(null)}
+                >
+                  <div>
+                    <h1>Ponto de Interesse (POI)</h1>
+                    <div>
+                      <strong>Endereço: </strong>
+                      {poiSelected.address}
+                    </div>
+                    <div>
+                      <strong>Nome: </strong>
+                      {poiSelected.name}
+                    </div>
+                    <div>
+                      <strong>Descrição: </strong>
+                      {poiSelected.description}
+                    </div>
+                  </div>
+                </InfoWindow>
+              ) : null}
+            </Marker>
           ))}
         </GoogleMap>
       </div>

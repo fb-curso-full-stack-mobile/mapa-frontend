@@ -41,12 +41,3 @@
 .search-box-layer nav button.active {
   background-color: #ddd;
 }
-
-.search-box-input {
-  font-size: 16px;
-  border: 1px solid #888;
-  border-radius: 4px;
-  padding: 4px 8px;
-  width: 100%;
-  box-sizing: border-box;
-}
