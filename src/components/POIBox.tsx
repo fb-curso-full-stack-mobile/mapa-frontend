@@ -4,6 +4,7 @@ import SearchBox from "./SearchBox";
 
 import "./POIBox.css";
 import { useForm } from "react-hook-form";
+import Button from "./Button";
 
 type POIBoxProps = {
   onPlaceSelected: (place: google.maps.places.PlaceResult) => void;
@@ -61,9 +62,7 @@ export default function POIBox({ onPlaceSelected, onPoiSaved }: POIBoxProps) {
       />
       <Input placeholder="Nome" register={register} name="name" />
       <Input placeholder="Descrição" register={register} name="description" />
-      <button className="button-poi-save" type="submit">
-        Salvar
-      </button>
+      <Button type="submit">Salvar</Button>
     </form>
   );
 }

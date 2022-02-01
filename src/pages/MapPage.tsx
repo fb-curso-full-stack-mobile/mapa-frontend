@@ -3,15 +3,19 @@ import {
   GoogleMap,
   Marker,
   InfoWindow,
+  DirectionsService,
+  DirectionsRenderer,
 } from "@react-google-maps/api";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import "./MapPage.css";
 
 import pin from "../images/pin.png";
 import pinPoi from "../images/pin_poi.png";
+import pinRoute from "../images/pin_route.png";
 import SearchBox from "../components/SearchBox";
 import POIBox from "../components/POIBox";
 import { Poi } from "../models/poi";
+import RouteBox from "../components/RouteBox";
 
 // -27.596433, -48.558353
 const center = { lat: -27.596433, lng: -48.558353 };
@@ -19,6 +23,7 @@ const center = { lat: -27.596433, lng: -48.558353 };
 const TABS = {
   search: 0,
   poi: 1,
+  route: 2,
 };
 
 export default function MapPage() {
@@ -32,6 +37,15 @@ export default function MapPage() {
 
   const [pois, setPois] = useState<Poi[]>([]);
   const [poiSelected, setPoiSelected] = useState<Poi | null>();
+
+  // Rota
+  const [pointA, setPointA] = useState<google.maps.LatLngLiteral>();
+  const [pointB, setPointB] = useState<google.maps.LatLngLiteral>();
+  const [origin, setOrigin] = useState<google.maps.LatLngLiteral | null>();
+  const [destination, setDestination] =
+    useState<google.maps.LatLngLiteral | null>();
+  const [response, setResponse] =
+    useState<google.maps.DistanceMatrixRequest | null>();
 
   const handleOnPlacesChanged = () => {
     const searchBoxPlaces = searchBox!.getPlaces();
@@ -65,6 +79,57 @@ export default function MapPage() {
     });
   };
 
+  const traceRoute = () => {
+    if (pointA && pointB) {
+      setOrigin(pointA);
+      setDestination(pointB);
+    }
+  };
+
+  const onPointChanged = (point: google.maps.LatLngLiteral) => {
+    setOrigin(null);
+    setDestination(null);
+    setResponse(null);
+    map?.panTo(point);
+  };
+
+  const onOriginChanged = (point: google.maps.LatLngLiteral) => {
+    setPointA(point);
+    onPointChanged(point);
+  };
+
+  const onDestinationChanged = (point: google.maps.LatLngLiteral) => {
+    setPointB(point);
+    onPointChanged(point);
+  };
+
+  const directionsServiceOption =
+    // @ts-ignore
+    useMemo<google.maps.DirectionsRequest>(() => {
+      return {
+        origin,
+        destination,
+        travelMode: "DRIVING",
+      };
+    }, [origin, destination]);
+
+  const directionsCallback = useCallback((res) => {
+    if (res !== null && res.status === "OK") {
+      setResponse(res);
+    } else {
+      console.log(res);
+    }
+  }, []);
+
+  const directionsRendererOptions = useMemo<any>(() => {
+    return {
+      directions: response,
+      markerOptions: {
+        icon: { url: pinRoute },
+      },
+    };
+  }, [response]);
+
   useEffect(() => {
     updatePois();
   }, []);
@@ -96,6 +161,12 @@ export default function MapPage() {
                 >
                   POI
                 </button>
+                <button
+                  className={activeTab === TABS.route ? "active" : ""}
+                  onClick={() => setActiveTab(TABS.route)}
+                >
+                  Rota
+                </button>
               </nav>
               {activeTab === TABS.search ? (
                 <SearchBox
@@ -106,6 +177,12 @@ export default function MapPage() {
                 <POIBox
                   onPlaceSelected={(place) => mapPanTo(place)}
                   onPoiSaved={updatePois}
+                />
+              ) : activeTab === TABS.route ? (
+                <RouteBox
+                  traceRoute={traceRoute}
+                  originChanged={onOriginChanged}
+                  destinationChanged={onDestinationChanged}
                 />
               ) : null}
             </div>
@@ -165,6 +242,22 @@ export default function MapPage() {
               ) : null}
             </Marker>
           ))}
+          {/* Rotas */}
+          {!response && pointA ? (
+            <Marker position={pointA} icon={pinRoute} />
+          ) : null}
+          {!response && pointB ? (
+            <Marker position={pointB} icon={pinRoute} />
+          ) : null}
+          {origin && destination ? (
+            <DirectionsService
+              options={directionsServiceOption}
+              callback={directionsCallback}
+            />
+          ) : null}
+          {response && directionsRendererOptions ? (
+            <DirectionsRenderer options={directionsRendererOptions} />
+          ) : null}
         </GoogleMap>
       </div>
     </LoadScript>

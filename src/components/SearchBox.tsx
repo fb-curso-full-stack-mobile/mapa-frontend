@@ -7,6 +7,7 @@ type SearchBoxProps = {
   onPlacesChanged?: () => void;
   register?: UseFormRegister<FieldValues>;
   name?: string;
+  placeholder?: string;
 };
 
 export default function SearchBox({
@@ -14,10 +15,11 @@ export default function SearchBox({
   onPlacesChanged,
   register,
   name,
+  placeholder,
 }: SearchBoxProps) {
   return (
     <StandaloneSearchBox onLoad={onLoad} onPlacesChanged={onPlacesChanged}>
-      <Input register={register} name={name} />
+      <Input register={register} name={name} placeholder={placeholder} />
     </StandaloneSearchBox>
   );
 }
